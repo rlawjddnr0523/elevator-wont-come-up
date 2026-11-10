@@ -16,6 +16,7 @@ public class Elevator {
     
     enum Status {
         RUNNING,
+        PARKING,      // 한가해서 대기 위치로 이동 중
         WAITING,
         IDLE,
     }
@@ -83,6 +84,12 @@ public class Elevator {
             t += 2;
         }
         return t;
+    }
+    
+    // 이동 중 상태: 멈춰 있으면 IDLE, 대기 위치로 가는 중이면 PARKING, 아니면 RUNNING
+    public Status moveStatus() {
+        if (getDirection() == Direction.NONE) return Status.IDLE;
+        return parking ? Status.PARKING : Status.RUNNING;
     }
     
     public int getPassengerCount() {

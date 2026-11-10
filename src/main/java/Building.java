@@ -85,8 +85,7 @@ public class Building {
                 if (e.getDestination().isEmpty()) {
                     policy.onIdle(this, e);
                 }
-                e.setStatus(e.getDirection() == Direction.NONE
-                        ? Elevator.Status.IDLE : Elevator.Status.RUNNING);
+                e.setStatus(e.moveStatus());
                 continue;
             }
             Direction dir = e.getDirection();      // step() 하기 전에 저장
@@ -123,8 +122,7 @@ public class Building {
                 if (e.getDestination().isEmpty()) {
                     policy.onIdle(this, e);
                 }
-                e.setStatus(e.getDirection() == Direction.NONE
-                        ? Elevator.Status.IDLE : Elevator.Status.RUNNING);
+                e.setStatus(e.moveStatus());
             }
         }
     }
@@ -231,8 +229,7 @@ public class Building {
             }
             nearest.addDestination(level);
             // 호출 직후에도 상태가 바로 보이도록 갱신
-            nearest.setStatus(nearest.getDirection() == Direction.NONE
-                    ? Elevator.Status.IDLE : Elevator.Status.RUNNING);
+            nearest.setStatus(nearest.moveStatus());
         }
         return nearest;
     }
