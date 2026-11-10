@@ -5,9 +5,21 @@ import java.io.InputStreamReader;
 public class Main {
     public static void main(String[] args) throws IOException {
         
+        // 사용법: Main [층수] [엘리베이터 수] [정원]  (기본값 10 2 8)
         int floorCount = 10;
         int evAmount = 2;
         int evCapacity = 8; // 최대 정원 (명)
+        try {
+            if (args.length > 0) floorCount = Integer.parseInt(args[0]);
+            if (args.length > 1) evAmount = Integer.parseInt(args[1]);
+            if (args.length > 2) evCapacity = Integer.parseInt(args[2]);
+            if (args.length > 3 || floorCount < 2 || evAmount < 1 || evCapacity < 1) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException ex) {
+            System.out.println("사용법: Main [층수(>=2)] [엘리베이터 수(>=1)] [정원(>=1)]  예) Main 20 4 10");
+            return;
+        }
         
         Building building = new Building(floorCount, evAmount, evCapacity);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
