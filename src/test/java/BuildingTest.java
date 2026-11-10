@@ -113,7 +113,7 @@ class BuildingTest {
         assertEquals(Floor.ButtonStatus.IDLE, b.getFloor(3).getButton());
         assertEquals(Elevator.DoorStatus.OPEN, ev.getDoorStatus());
         
-        ticks(b, 5);                       // 3→8층
+        ticks(b, 6);                       // 문 닫기 1틱 + 3→8층 5틱
         assertEquals(8, ev.getCurrentLevel());
         assertEquals(0, ev.getPassengerCount());
         assertEquals(3, b.getStats().getArrived());
@@ -142,7 +142,7 @@ class BuildingTest {
         assertTrue(ev1.isFull());
         b.getFloor(5).getWaiting().add(new Person(5, 8, 0));   // 5층 외부 호출 (up)
         b.getFloor(5).setUp(true);
-        ticks(b, 3);                                   // 3→5층 통과
+        ticks(b, 4);                                   // 문 닫기 1틱 + 2→5층 3틱 (5층 통과)
         assertEquals(5, ev1.getCurrentLevel());
         assertNotEquals(Elevator.DoorStatus.OPEN, ev1.getDoorStatus());
         assertEquals(1, b.getFloor(5).getWaiting().size());   // 태우지 않았다
@@ -155,7 +155,7 @@ class BuildingTest {
         ticks(b, 1);
         Elevator ev = b.getElevators().get(0);
         assertTrue(ev.isFull());
-        ticks(b, 2);
+        ticks(b, 3);                       // 문 닫기 1틱 + 2→4층 2틱
         assertEquals(4, ev.getCurrentLevel());
         assertEquals(0, ev.getPassengerCount());
         assertEquals(Elevator.DoorStatus.OPEN, ev.getDoorStatus());
@@ -234,17 +234,33 @@ class BuildingTest {
         assertEquals(Mode.ECO, b.getMode());
     }
     
+    // ── 문 ──
+    
+    @Test
+    void 정차하면_문이_1틱_열리고_다음_틱에_닫힌_뒤_이동한다() {
+        Building b = building(10, 1, 8);
+        Elevator ev = b.getElevators().get(0);
+        b.call(2, Direction.UP, 1, 5);
+        b.tick();                                          // 2층 도착, 문 열림
+        assertEquals(Elevator.DoorStatus.OPEN, ev.getDoorStatus());
+        b.tick();                                          // 문 닫힘 (이동 없음)
+        assertEquals(Elevator.DoorStatus.CLOSED, ev.getDoorStatus());
+        assertEquals(2, ev.getCurrentLevel());
+        b.tick();                                          // 이동 재개
+        assertEquals(3, ev.getCurrentLevel());
+    }
+    
     // ── 통계 ──
     
     @Test
     void 대기_시간과_탑승_시간이_통계에_기록된다() {
         Building b = building(10, 1, 8);
         b.call(3, Direction.UP, 1, 5);   // time 0에 호출
-        ticks(b, 4);                     // 2틱에 탑승, 4틱에 도착
+        ticks(b, 5);                     // 2틱 탑승, 3틱 문 닫기, 5틱 도착
         Stats st = b.getStats();
         assertEquals(1, st.getCalled());
         assertEquals(1, st.getArrived());
         assertEquals(2.0, st.avgWait(), 0.001);
-        assertEquals(2.0, st.avgRide(), 0.001);
+        assertEquals(3.0, st.avgRide(), 0.001);
     }
 }

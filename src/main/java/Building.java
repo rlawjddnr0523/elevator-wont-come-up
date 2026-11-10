@@ -72,7 +72,7 @@ public class Building {
     // 배정 못 받은 호출 (다음 틱에 재시도)
     private final List<Call> pending = new ArrayList<>();
     
-    // 시간을 한 단위 진행: 대기 호출 재배정 → 모든 엘리베이터를 한 칸씩 이동 → 정차 판단
+    // 시간을 한 단위 진행: 대기 호출 재배정 → (문 닫기 | 한 칸 이동 + 정차 판단)
     public void tick() {
         time++;
         if (autoMode) updateMode();
@@ -83,6 +83,16 @@ public class Building {
         }
         
         for (Elevator e : elevators) {
+            // 문이 열려 있었다면 이번 틱은 문을 닫는 데 쓴다 (이동 없음): 열림 1틱 → 닫힘 1틱
+            if (e.getDoorStatus() == Elevator.DoorStatus.OPEN) {
+                e.setDoorStatus(Elevator.DoorStatus.CLOSED);
+                if (e.getDestination().isEmpty()) {
+                    policy.onIdle(this, e);
+                }
+                e.setStatus(e.getDirection() == Direction.NONE
+                        ? Elevator.Status.IDLE : Elevator.Status.RUNNING);
+                continue;
+            }
             Direction dir = e.getDirection();      // step() 하기 전에 저장
             e.step();
             int level = e.getCurrentLevel();
