@@ -45,21 +45,17 @@ public class Building {
         return floors.get(level - 1);
     }
     
-    // 부하 기반 자동 전환: 대기 인원이 많으면 FAST, 한동안 한가하면 ECO, 그 외 STANDARD
+    // 부하 기반 자동 전환: 평소엔 FAST, 한동안 한가하면 ECO(절전), 대기가 생기면 다시 FAST
     private void updateMode() {
         int waiting = floors.stream().mapToInt(f -> f.getWaiting().size()).sum();
         int riding = elevators.stream().mapToInt(Elevator::getPassengerCount).sum();
         quietTicks = (waiting == 0 && riding == 0) ? quietTicks + 1 : 0;
         
-        Mode next = mode;
-        if (waiting >= 6) {
-            next = Mode.FAST;
-        } else if (mode == Mode.FAST && waiting <= 1) {
-            next = Mode.STANDARD;              // 충분히 줄어들 때까지 유지 (잦은 전환 방지)
-        } else if (mode == Mode.ECO && waiting >= 3) {
-            next = Mode.STANDARD;
-        } else if (mode == Mode.STANDARD && quietTicks >= 10) {
-            next = Mode.ECO;
+        Mode next;
+        if (mode == Mode.ECO) {
+            next = waiting >= 3 ? Mode.FAST : Mode.ECO;   // 잦은 전환 방지: 대기가 꽤 쌓여야 복귀
+        } else {
+            next = quietTicks >= 10 ? Mode.ECO : Mode.FAST;
         }
         if (next != mode) {
             this.mode = next;
