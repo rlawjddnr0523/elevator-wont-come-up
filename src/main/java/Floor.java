@@ -7,9 +7,9 @@ public class Floor {
     java.util.List<Person> waiting = new java.util.ArrayList<>();
     boolean isUp = false;
     boolean isDown = false;
-    buttonStatus button = buttonStatus.IDLE;
+    ButtonStatus button = ButtonStatus.IDLE;
     
-    public static enum buttonStatus {
+    public static enum ButtonStatus {
         ACTIVE,
         IDLE
     }

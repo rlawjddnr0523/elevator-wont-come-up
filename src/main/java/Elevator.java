@@ -16,7 +16,6 @@ public class Elevator {
     enum Status {
         RUNNING,
         WAITING,
-        MAX_CAPACITY,
         IDLE,
     }
     

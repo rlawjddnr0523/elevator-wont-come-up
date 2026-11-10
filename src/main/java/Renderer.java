@@ -14,7 +14,7 @@ public class Renderer {
         // 층별 (맨 위층부터)
         for (int level = floorCount; level >= 1; level--) {
             Floor floor = building.getFloor(level);
-            String button = floor.getButton() == Floor.buttonStatus.ACTIVE ? "●" : " ";
+            String button = floor.getButton() == Floor.ButtonStatus.ACTIVE ? "●" : " ";
             
             StringBuilder row = new StringBuilder(String.format("%2dF %s %-4s|", level, button,
                     floor.getWaiting().isEmpty() ? "" : "(" + floor.getWaiting().size() + ")"));

@@ -133,7 +133,7 @@ public class Building {
     private void refreshFloor(Floor f) {
         f.setUp(f.getWaiting().stream().anyMatch(p -> p.direction() == Direction.UP));
         f.setDown(f.getWaiting().stream().anyMatch(p -> p.direction() == Direction.DOWN));
-        f.setButton(f.getWaiting().isEmpty() ? Floor.buttonStatus.IDLE : Floor.buttonStatus.ACTIVE);
+        f.setButton(f.getWaiting().isEmpty() ? Floor.ButtonStatus.IDLE : Floor.ButtonStatus.ACTIVE);
         if (f.isUp()) addPending(new Call(f.getLevel(), Direction.UP));
         if (f.isDown()) addPending(new Call(f.getLevel(), Direction.DOWN));
     }
@@ -178,7 +178,7 @@ public class Building {
             f.getWaiting().add(new Person(level, dest, time));
         }
         stats.recordCall(count);
-        f.setButton(Floor.buttonStatus.ACTIVE);
+        f.setButton(Floor.ButtonStatus.ACTIVE);
         if (direction == Direction.UP) f.setUp(true);
         if (direction == Direction.DOWN) f.setDown(true);
         
@@ -212,6 +212,9 @@ public class Building {
         }
         if (nearest != null) {
             nearest.addDestination(level);
+            // 호출 직후에도 상태가 바로 보이도록 갱신
+            nearest.setStatus(nearest.getDirection() == Direction.NONE
+                    ? Elevator.Status.IDLE : Elevator.Status.RUNNING);
         }
         return nearest;
     }
