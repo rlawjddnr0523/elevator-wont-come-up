@@ -41,4 +41,16 @@ public class Renderer {
             case NONE -> "■";
         };
     }
+    
+    public static void renderStats(Building b) {
+        Stats st = b.getStats();
+        int waiting = b.getFloors().stream().mapToInt(f -> f.getWaiting().size()).sum();
+        int riding = b.getElevators().stream().mapToInt(Elevator::getPassengerCount).sum();
+        int moved = b.getElevators().stream().mapToInt(Elevator::getMovedFloors).sum();
+        System.out.println("── 통계 (" + b.getMode() + ", " + b.getTime() + "틱) ──");
+        System.out.printf("호출 %d명 | 도착 %d명 | 탑승 중 %d명 | 대기 중 %d명%n",
+                st.getCalled(), st.getArrived(), riding, waiting);
+        System.out.printf("평균 대기 %.1f틱 | 최대 대기 %d틱 | 평균 탑승 %.1f틱 | 총 이동 %d층%n",
+                st.avgWait(), st.getMaxWait(), st.avgRide(), moved);
+    }
 }

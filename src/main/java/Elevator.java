@@ -11,6 +11,7 @@ public class Elevator {
     DoorStatus doorStatus = DoorStatus.CLOSED;
     List<Integer> destination = new ArrayList<>();
     int currentLevel;
+    int movedFloors;      // 누적 이동 층수
     
     enum Status {
         RUNNING,
@@ -58,8 +59,8 @@ public class Elevator {
     // 목적지 방향으로 한 칸 이동 (목적지가 없거나 도착했으면 제자리)
     public void step() {
         switch (getDirection()) {
-            case UP -> currentLevel++;
-            case DOWN -> currentLevel--;
+            case UP -> { currentLevel++; movedFloors++; }
+            case DOWN -> { currentLevel--; movedFloors++; }
             case NONE -> { }
         }
     }

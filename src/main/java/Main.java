@@ -17,7 +17,7 @@ public class Main {
         Renderer.render(building);
         
         while (true) {
-            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco> / auto <on|off|rate 0.3> / run <N> / 엔터=틱 / exit: ");
+            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco> / auto <on|off|rate 0.3> / run <N> / stats / 엔터=틱 / exit: ");
             String line = br.readLine();
             if (line == null) break;
             line = line.trim().toLowerCase();
@@ -42,6 +42,11 @@ public class Main {
                 continue;
             }
             
+            if (line.equals("stats")) {
+                Renderer.renderStats(building);
+                continue;
+            }
+            
             if (line.startsWith("run")) {
                 String[] a = line.split("\\s+");
                 int n;
@@ -57,6 +62,7 @@ public class Main {
                 }
                 System.out.println();
                 Renderer.render(building);
+                Renderer.renderStats(building);
                 continue;
             }
             

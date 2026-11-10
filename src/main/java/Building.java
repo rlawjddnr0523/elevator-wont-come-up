@@ -10,6 +10,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Building {
     private final List<Floor> floors = new ArrayList<>();
     private final List<Elevator> elevators = new ArrayList<>();
+    private final Stats stats = new Stats();
+    private int time = 0;   // 현재 틱
     private Mode mode = Mode.STANDARD;
     private DispatchPolicy policy = mode.policy();
     
@@ -43,6 +45,7 @@ public class Building {
     
     // 시간을 한 단위 진행: 대기 호출 재배정 → 모든 엘리베이터를 한 칸씩 이동 → 정차 판단
     public void tick() {
+        time++;
         for (Call c : new ArrayList<>(pending)) {
             if (assign(c.level(), c.direction()) != null) {
                 pending.remove(c);
@@ -61,7 +64,12 @@ public class Building {
             if (policy.shouldStop(e, here, dir, arrived)) {
                 // 정차: 목적지에서 제거 → 하차 → 탑승 → 호출 상태 갱신 → 문 열기
                 e.getDestination().remove(Integer.valueOf(level));
-                e.getRiders().removeIf(p -> p.getDestinationLevel() == level);
+                e.getRiders().removeIf(p -> {
+                    if (p.getDestinationLevel() != level) return false;
+                    p.setArriveTime(time);
+                    stats.recordArrival(p);
+                    return true;
+                });
                 board(e, here);
                 refreshFloor(here);
                 e.setDoorStatus(Elevator.DoorStatus.OPEN);
@@ -85,6 +93,7 @@ public class Building {
             if (go == Direction.NONE) go = p.direction();
             if (p.direction() != go) continue;
             here.getWaiting().remove(p);
+            p.setBoardTime(time);
             e.getRiders().add(p);
             e.addDestination(p.getDestinationLevel());
         }
@@ -136,8 +145,9 @@ public class Building {
         Floor f = getFloor(level);
         for (int i = 0; i < count; i++) {
             int dest = destination != null ? destination : randomDestination(level, direction);
-            f.getWaiting().add(new Person(level, dest));
+            f.getWaiting().add(new Person(level, dest, time));
         }
+        stats.recordCall(count);
         f.setButton(Floor.buttonStatus.ACTIVE);
         if (direction == Direction.UP) f.setUp(true);
         if (direction == Direction.DOWN) f.setDown(true);
