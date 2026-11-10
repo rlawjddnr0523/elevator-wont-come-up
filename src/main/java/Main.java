@@ -17,7 +17,7 @@ public class Main {
         Renderer.render(building);
         
         while (true) {
-            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco> / auto <on|off|rate 0.3> / run <N> / stats / 엔터=틱 / exit: ");
+            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco|auto> / compare <N> / auto <on|off|rate 0.3> / run <N> / stats / 엔터=틱 / exit: ");
             String line = br.readLine();
             if (line == null) break;
             line = line.trim().toLowerCase();
@@ -39,6 +39,19 @@ public class Main {
                     System.out.println(ex instanceof NumberFormatException
                             ? "확률은 숫자여야 합니다. 예) auto rate 0.3" : ex.getMessage());
                 }
+                continue;
+            }
+            
+            if (line.startsWith("compare")) {
+                String[] a = line.split("\\s+");
+                int n;
+                try {
+                    n = Integer.parseInt(a[1]);
+                } catch (RuntimeException ex) {
+                    System.out.println("형식: compare <틱 수>");
+                    continue;
+                }
+                compare(floorCount, evAmount, evCapacity, generator.getRate(), n);
                 continue;
             }
             
@@ -69,10 +82,15 @@ public class Main {
             if (line.startsWith("mode")) {
                 String[] m = line.split("\\s+");
                 try {
+                    if (m[1].equals("auto")) {
+                        building.setAutoMode(true);
+                        System.out.println("모드: 자동 전환 (현재 " + building.getMode() + ")");
+                        continue;
+                    }
                     building.setMode(Mode.valueOf(m[1].toUpperCase()));
                     System.out.println("모드: " + building.getMode());
                 } catch (RuntimeException ex) {
-                    System.out.println("형식: mode <standard|rush_hour|eco>");
+                    System.out.println("형식: mode <standard|rush_hour|eco|auto>");
                 }
                 continue;
             }
@@ -118,6 +136,26 @@ public class Main {
             
             System.out.println();
             Renderer.render(building);
+        }
+    }
+    
+    // 같은 호출 패턴(고정 시드)으로 모드별 성능을 비교한다
+    private static void compare(int floors, int evs, int cap, double rate, int ticks) {
+        System.out.printf("── 모드 비교 (%d틱, 호출 확률 %.2f, 동일 시드) ──%n", ticks, rate);
+        for (String name : new String[]{"STANDARD", "RUSH_HOUR", "ECO", "AUTO"}) {
+            Building b = new Building(floors, evs, cap);
+            if (name.equals("AUTO")) b.setAutoMode(true);
+            else b.setMode(Mode.valueOf(name));
+            PersonGenerator g = new PersonGenerator(rate, new java.util.Random(42));
+            g.setEnabled(true);
+            for (int i = 0; i < ticks; i++) {
+                g.generate(b);
+                b.tick();
+            }
+            Stats st = b.getStats();
+            int moved = b.getElevators().stream().mapToInt(Elevator::getMovedFloors).sum();
+            System.out.printf("%-10s 도착 %3d/%3d | 평균 대기 %5.1f | 최대 대기 %3d | 평균 탑승 %4.1f | 총 이동 %4d층%n",
+                    name, st.getArrived(), st.getCalled(), st.avgWait(), st.getMaxWait(), st.avgRide(), moved);
         }
     }
 }
