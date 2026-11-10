@@ -12,10 +12,17 @@ public class Building {
     private final List<Elevator> elevators = new ArrayList<>();
     private final Stats stats = new Stats();
     private int time = 0;   // 현재 틱
+    private boolean autoMode = false;   // true면 부하에 따라 모드를 자동 전환
+    private int quietTicks = 0;           // 연속으로 한가했던 틱 수
     private Mode mode = Mode.STANDARD;
     private DispatchPolicy policy = mode.policy();
     
+    public void setAutoMode(boolean autoMode) {
+        this.autoMode = autoMode;
+    }
+    
     public void setMode(Mode mode) {
+        this.autoMode = false;   // 수동으로 고르면 자동 전환 해제
         this.mode = mode;
         this.policy = mode.policy();
     }
@@ -38,6 +45,28 @@ public class Building {
         return floors.get(level - 1);
     }
     
+    // 부하 기반 자동 전환: 대기 인원이 많으면 RUSH_HOUR, 한동안 한가하면 ECO, 그 외 STANDARD
+    private void updateMode() {
+        int waiting = floors.stream().mapToInt(f -> f.getWaiting().size()).sum();
+        int riding = elevators.stream().mapToInt(Elevator::getPassengerCount).sum();
+        quietTicks = (waiting == 0 && riding == 0) ? quietTicks + 1 : 0;
+        
+        Mode next = mode;
+        if (waiting >= 6) {
+            next = Mode.RUSH_HOUR;
+        } else if (mode == Mode.RUSH_HOUR && waiting <= 1) {
+            next = Mode.STANDARD;              // 충분히 줄어들 때까지 유지 (잦은 전환 방지)
+        } else if (mode == Mode.ECO && waiting >= 3) {
+            next = Mode.STANDARD;
+        } else if (mode == Mode.STANDARD && quietTicks >= 10) {
+            next = Mode.ECO;
+        }
+        if (next != mode) {
+            this.mode = next;
+            this.policy = next.policy();
+        }
+    }
+    
     private record Call(int level, Direction direction) { }
     
     // 배정 못 받은 호출 (다음 틱에 재시도)
@@ -46,6 +75,7 @@ public class Building {
     // 시간을 한 단위 진행: 대기 호출 재배정 → 모든 엘리베이터를 한 칸씩 이동 → 정차 판단
     public void tick() {
         time++;
+        if (autoMode) updateMode();
         for (Call c : new ArrayList<>(pending)) {
             if (assign(c.level(), c.direction()) != null) {
                 pending.remove(c);
