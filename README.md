@@ -3,6 +3,8 @@
 Java 콘솔 엘리베이터 스케줄링 시뮬레이션입니다. 엘리베이터 대수와 상관없이 호출을 효율적으로 배정하고,
 상태를 콘솔로 시각화하며, 모드(STANDARD / FAST / ECO / AUTO)별 성능을 비교할 수 있습니다.
 
+전체 기능은 [기능 목록(FEATURES.md)](FEATURES.md)에서 확인할 수 있습니다.
+
 ## 실행
 
 JDK가 필요합니다 (Gradle은 Wrapper가 처리합니다).
@@ -65,7 +67,7 @@ JDK가 필요합니다 (Gradle은 Wrapper가 처리합니다).
 ### 성능 비교 (참고)
 
 10층 2대, 시드 40개 × 1000틱 평균 대기(틱). 대기 중인 사람의 대기 시간도 포함한 값입니다.
-`compare`는 시드 하나만 쓰므로 수치가 이 표와 다를 수 있습니다.
+`stats`와 `compare`는 도착한 사람만 집계하고 시드 하나만 쓰므로 수치가 이 표와 다를 수 있습니다.
 
 | 호출 확률 | STANDARD | FAST | ECO |
 |---|---|---|---|
@@ -73,6 +75,7 @@ JDK가 필요합니다 (Gradle은 Wrapper가 처리합니다).
 | 0.3 (보통) | 7.4 | 7.4 | 23.2 |
 | 0.6 (혼잡) | 15.5 | 15.0 | 152.7 |
 
+- 20층 4대, 호출 확률 0.1에서는 평균 대기가 STANDARD 4.4 → FAST 2.7로 줄어듭니다 (같은 조건의 벤치마크).
 - FAST는 한산할 때 가장 빠르지만 혼잡할 때는 STANDARD와 비슷합니다. 대기 위치로 미리 이동하느라 이동량이 약 30% 늘어납니다.
 - ECO는 이동량이 절반 수준으로 줄지만 혼잡해지면 대기가 급격히 늘어납니다.
 - 호출은 층이 균등한 랜덤이므로, 출근 시간대처럼 특정 층 쏠림이 있는 패턴에서는 결과가 달라질 수 있습니다.
@@ -86,6 +89,7 @@ src/main/java
 ├── Elevator.java        상태, SCAN 경로 정렬, ETA 계산
 ├── Floor.java           호출 버튼, 대기자 목록
 ├── Person.java          호출 층/목적지, 호출·탑승·도착 틱
+├── Direction.java       UP / DOWN / NONE
 ├── DispatchPolicy.java  모드별 규칙 인터페이스 (canServe, cost, shouldStop, onIdle)
 ├── StandardPolicy / FastPolicy / EcoPolicy, Mode
 ├── PersonGenerator.java 랜덤 호출 생성 (시드 지정 가능)
