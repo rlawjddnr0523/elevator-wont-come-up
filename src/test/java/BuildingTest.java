@@ -201,12 +201,37 @@ class BuildingTest {
     }
     
     @Test
-    void RUSH_HOUR는_한가한_엘리베이터를_로비로_복귀시킨다() {
+    void FAST는_한가한_엘리베이터를_층_전체에_분산시킨다() {
+        Building b = building(10, 2, 8);
+        b.setMode(Mode.FAST);
+        ticks(b, 10);
+        assertEquals(3, b.getElevators().get(0).getCurrentLevel());
+        assertEquals(8, b.getElevators().get(1).getCurrentLevel());
+    }
+    
+    @Test
+    void FAST_대기_위치로_이동_중에도_호출을_받으면_대기_이동을_취소한다() {
         Building b = building(10, 1, 8);
-        b.setMode(Mode.RUSH_HOUR);
-        b.getElevators().get(0).setCurrentLevel(6);
-        ticks(b, 6);
-        assertEquals(1, b.getElevators().get(0).getCurrentLevel());
+        b.setMode(Mode.FAST);
+        ticks(b, 2);                                    // 홈(6층)으로 이동 중
+        Elevator ev = b.getElevators().get(0);
+        assertTrue(ev.isParking());
+        assertSame(ev, b.call(2, Direction.UP, 1, 9));
+        assertFalse(ev.isParking());
+        assertEquals(java.util.List.of(2), ev.getDestination());
+    }
+    
+    @Test
+    void FAST는_정차_예정이_많은_엘리베이터보다_ETA가_짧은_엘리베이터를_고른다() {
+        Building b = building(10, 2, 8);
+        b.setMode(Mode.FAST);
+        Elevator ev1 = b.getElevators().get(0);
+        Elevator ev2 = b.getElevators().get(1);
+        ev1.setCurrentLevel(3);
+        for (int l = 4; l <= 7; l++) ev1.addDestination(l);   // 4개 층에 정차 예정
+        ev2.setCurrentLevel(1);
+        // 거리만 보면 EV1(3→8: 5층, EV2: 7층)이 가깝지만 ETA는 EV1 13틱, EV2 7틱
+        assertSame(ev2, b.call(8, Direction.UP));
     }
     
     @Test
@@ -218,12 +243,12 @@ class BuildingTest {
     }
     
     @Test
-    void 자동_모드는_대기가_몰리면_RUSH_HOUR로_바뀐다() {
+    void 자동_모드는_대기가_몰리면_FAST로_바뀐다() {
         Building b = building(10, 1, 8);
         b.setAutoMode(true);
         b.call(5, Direction.UP, 7, 9);   // 대기 7명
         b.tick();
-        assertEquals(Mode.RUSH_HOUR, b.getMode());
+        assertEquals(Mode.FAST, b.getMode());
     }
     
     @Test
@@ -232,6 +257,21 @@ class BuildingTest {
         b.setAutoMode(true);
         ticks(b, 10);
         assertEquals(Mode.ECO, b.getMode());
+    }
+    
+    // ── 경로 정렬 ──
+    
+    @Test
+    void 목적지는_가는_방향으로_먼저_훑고_반대편은_돌아오며_처리한다() {
+        Building b = building(10, 1, 8);
+        Elevator ev = b.getElevators().get(0);
+        ev.setCurrentLevel(3);
+        ev.addDestination(8);
+        ev.addDestination(5);
+        assertEquals(java.util.List.of(5, 8), ev.getDestination());
+        ev.addDestination(2);
+        ev.addDestination(1);
+        assertEquals(java.util.List.of(5, 8, 2, 1), ev.getDestination());
     }
     
     // ── 문 ──

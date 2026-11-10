@@ -4,6 +4,11 @@ public interface DispatchPolicy {
     // e가 level 층의 direction 호출을 맡을 수 있는지
     boolean canServe(Building b, Elevator e, int level, Direction direction);
     
+    // 배정 비용: 작을수록 우선 (기본: 현재 층과의 거리)
+    default int cost(Building b, Elevator e, int level, Direction direction) {
+        return Math.abs(e.getCurrentLevel() - level);
+    }
+    
     // 이동 직후, 현재 층에서 정차할지 (prevDir: 이동 전 진행 방향)
     default boolean shouldStop(Elevator e, Floor here, Direction prevDir, boolean arrived) {
         boolean sameDirection =

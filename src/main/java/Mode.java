@@ -1,6 +1,6 @@
 public enum Mode {
     STANDARD(new StandardPolicy()),
-    RUSH_HOUR(new RushHourPolicy()),
+    FAST(new FastPolicy()),
     ECO(new EcoPolicy());
     
     private final DispatchPolicy policy;

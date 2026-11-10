@@ -45,7 +45,7 @@ public class Building {
         return floors.get(level - 1);
     }
     
-    // 부하 기반 자동 전환: 대기 인원이 많으면 RUSH_HOUR, 한동안 한가하면 ECO, 그 외 STANDARD
+    // 부하 기반 자동 전환: 대기 인원이 많으면 FAST, 한동안 한가하면 ECO, 그 외 STANDARD
     private void updateMode() {
         int waiting = floors.stream().mapToInt(f -> f.getWaiting().size()).sum();
         int riding = elevators.stream().mapToInt(Elevator::getPassengerCount).sum();
@@ -53,8 +53,8 @@ public class Building {
         
         Mode next = mode;
         if (waiting >= 6) {
-            next = Mode.RUSH_HOUR;
-        } else if (mode == Mode.RUSH_HOUR && waiting <= 1) {
+            next = Mode.FAST;
+        } else if (mode == Mode.FAST && waiting <= 1) {
             next = Mode.STANDARD;              // 충분히 줄어들 때까지 유지 (잦은 전환 방지)
         } else if (mode == Mode.ECO && waiting >= 3) {
             next = Mode.STANDARD;
@@ -97,6 +97,14 @@ public class Building {
             e.step();
             int level = e.getCurrentLevel();
             Floor here = getFloor(level);
+            
+            // 대기 위치에 도착하면 문을 열지 않고 그냥 대기
+            if (e.isParking() && e.getDestination().size() == 1 && e.getDestination().getFirst() == level) {
+                e.getDestination().clear();
+                e.setParking(false);
+                e.setStatus(Elevator.Status.IDLE);
+                continue;
+            }
             
             boolean arrived = !e.getDestination().isEmpty()
                     && e.getDestination().getFirst() == level;
@@ -214,13 +222,17 @@ public class Building {
             if (!policy.canServe(this, e, level, direction)) {
                 continue;
             }
-            int distance = Math.abs(e.getCurrentLevel() - level);
-            if (distance < nearestDistance) {
+            int cost = policy.cost(this, e, level, direction);
+            if (cost < nearestDistance) {
                 nearest = e;
-                nearestDistance = distance;
+                nearestDistance = cost;
             }
         }
         if (nearest != null) {
+            if (nearest.isParking()) {            // 대기 위치 이동은 취소
+                nearest.getDestination().clear();
+                nearest.setParking(false);
+            }
             nearest.addDestination(level);
             // 호출 직후에도 상태가 바로 보이도록 갱신
             nearest.setStatus(nearest.getDirection() == Direction.NONE

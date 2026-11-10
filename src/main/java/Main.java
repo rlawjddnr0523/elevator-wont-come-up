@@ -17,7 +17,7 @@ public class Main {
         Renderer.render(building);
         
         while (true) {
-            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco|auto> / compare <N> / auto <on|off|rate 0.3> / run <N> / stats / 엔터=틱 / exit: ");
+            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|fast|eco|auto> / compare <N> / auto <on|off|rate 0.3> / run <N> / stats / 엔터=틱 / exit: ");
             String line = br.readLine();
             if (line == null) break;
             line = line.trim().toLowerCase();
@@ -90,7 +90,7 @@ public class Main {
                     building.setMode(Mode.valueOf(m[1].toUpperCase()));
                     System.out.println("모드: " + building.getMode());
                 } catch (RuntimeException ex) {
-                    System.out.println("형식: mode <standard|rush_hour|eco|auto>");
+                    System.out.println("형식: mode <standard|fast|eco|auto>");
                 }
                 continue;
             }
@@ -142,7 +142,7 @@ public class Main {
     // 같은 호출 패턴(고정 시드)으로 모드별 성능을 비교한다
     private static void compare(int floors, int evs, int cap, double rate, int ticks) {
         System.out.printf("── 모드 비교 (%d틱, 호출 확률 %.2f, 동일 시드) ──%n", ticks, rate);
-        for (String name : new String[]{"STANDARD", "RUSH_HOUR", "ECO", "AUTO"}) {
+        for (String name : new String[]{"STANDARD", "FAST", "ECO", "AUTO"}) {
             Building b = new Building(floors, evs, cap);
             if (name.equals("AUTO")) b.setAutoMode(true);
             else b.setMode(Mode.valueOf(name));
