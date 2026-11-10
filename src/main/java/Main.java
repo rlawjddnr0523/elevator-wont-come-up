@@ -12,16 +12,52 @@ public class Main {
         Building building = new Building(floorCount, evAmount, evCapacity);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         
+        PersonGenerator generator = new PersonGenerator(0.3);
+        
         Renderer.render(building);
         
         while (true) {
-            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco> / 엔터=틱 / exit: ");
+            System.out.print("\n호출(예: 3 up 3 8 = 3층/위/3명/8층행) / mode <standard|rush_hour|eco> / auto <on|off|rate 0.3> / run <N> / 엔터=틱 / exit: ");
             String line = br.readLine();
             if (line == null) break;
             line = line.trim().toLowerCase();
             
             if (line.equals("exit")) {
                 break;
+            }
+            
+            if (line.startsWith("auto")) {
+                String[] a = line.split("\\s+");
+                try {
+                    if (a.length == 2 && a[1].equals("on")) generator.setEnabled(true);
+                    else if (a.length == 2 && a[1].equals("off")) generator.setEnabled(false);
+                    else if (a.length == 3 && a[1].equals("rate")) generator.setRate(Double.parseDouble(a[2]));
+                    else throw new IllegalArgumentException("형식: auto <on|off> / auto rate <0~1>");
+                    System.out.printf("자동 생성: %s (틱당 확률 %.2f)%n",
+                            generator.isEnabled() ? "ON" : "OFF", generator.getRate());
+                } catch (IllegalArgumentException ex) {
+                    System.out.println(ex instanceof NumberFormatException
+                            ? "확률은 숫자여야 합니다. 예) auto rate 0.3" : ex.getMessage());
+                }
+                continue;
+            }
+            
+            if (line.startsWith("run")) {
+                String[] a = line.split("\\s+");
+                int n;
+                try {
+                    n = Integer.parseInt(a[1]);
+                } catch (RuntimeException ex) {
+                    System.out.println("형식: run <틱 수>");
+                    continue;
+                }
+                for (int i = 0; i < n; i++) {
+                    generator.generate(building);
+                    building.tick();
+                }
+                System.out.println();
+                Renderer.render(building);
+                continue;
             }
             
             if (line.startsWith("mode")) {
@@ -70,6 +106,7 @@ public class Main {
                     System.out.println("가용 엘리베이터가 없어 대기열에 등록했습니다.");
                 }
             } else {
+                generator.generate(building);
                 building.tick();
             }
             
